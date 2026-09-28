@@ -14,6 +14,10 @@ import { sfx } from "../lib/sound";
 
 const STORAGE_KEY = "tally.teams.v2";
 const SOUND_KEY = "tally.sound.v2";
+const TITLE_KEY = "tally.title.v1";
+const DEFAULT_TITLE = "STANDINGS";
+const KICKER_KEY = "tally.kicker.v1";
+const DEFAULT_KICKER = "LIVE";
 
 const SEED: Team[] = [
   { id: "seed-1", name: "Neon Vipers", color: PALETTE[0], score: 24, createdAt: 1 },
@@ -31,7 +35,9 @@ export function sortTeams(list: Team[]): Team[] {
 
 function rankMapOf(list: Team[]): Map<string, number> {
   const map = new Map<string, number>();
-  sortTeams(list).forEach((t, i) => map.set(t.id, i + 1));
+  sortTeams(list)
+    .filter((t) => t.score > 0)
+    .forEach((t, i) => map.set(t.id, i + 1));
   return map;
 }
 
@@ -84,6 +90,22 @@ export function useScoreboard() {
     }
   });
   const [simOn, setSimOn] = useState(false);
+  const [title, setTitleState] = useState<string>(() => {
+    try {
+      const t = localStorage.getItem(TITLE_KEY);
+      return t && t.trim() ? t.slice(0, 24) : DEFAULT_TITLE;
+    } catch {
+      return DEFAULT_TITLE;
+    }
+  });
+  const [kicker, setKickerState] = useState<string>(() => {
+    try {
+      const k = localStorage.getItem(KICKER_KEY);
+      return k && k.trim() ? k.slice(0, 16) : DEFAULT_KICKER;
+    } catch {
+      return DEFAULT_KICKER;
+    }
+  });
   const [canUndo, setCanUndo] = useState(false);
   const [deltas, setDeltas] = useState<Record<string, ScoreDelta>>({});
   const [shifts, setShifts] = useState<Record<string, RankShift>>({});
@@ -110,6 +132,22 @@ export function useScoreboard() {
       /* noop */
     }
   }, [soundOn]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TITLE_KEY, title);
+    } catch {
+      /* noop */
+    }
+  }, [title]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(KICKER_KEY, kicker);
+    } catch {
+      /* noop */
+    }
+  }, [kicker]);
 
   /* ------------------------------- transient cues ------------------------------ */
   const scheduleDelta = useCallback((teamId: string, amount: number) => {
@@ -149,10 +187,12 @@ export function useScoreboard() {
       const nextRanks = rankMapOf(next);
 
       if (opts.movedTeamId) {
-        const shift =
-          (prevRanks.get(opts.movedTeamId) ?? 0) -
-          (nextRanks.get(opts.movedTeamId) ?? 0);
-        if (shift !== 0) scheduleShift(opts.movedTeamId, shift);
+        const prevRank = prevRanks.get(opts.movedTeamId);
+        const nextRank = nextRanks.get(opts.movedTeamId);
+        if (prevRank !== undefined && nextRank !== undefined) {
+          const shift = prevRank - nextRank;
+          if (shift !== 0) scheduleShift(opts.movedTeamId, shift);
+        }
       }
 
       setTeams(next);
@@ -273,6 +313,16 @@ export function useScoreboard() {
     sfx.down();
   }, []);
 
+  const setTitle = useCallback((value: string) => {
+    const clean = value.trim().replace(/\s+/g, " ").slice(0, 24);
+    setTitleState(clean || DEFAULT_TITLE);
+  }, []);
+
+  const setKicker = useCallback((value: string) => {
+    const clean = value.trim().replace(/\s+/g, " ").slice(0, 16);
+    setKickerState(clean || DEFAULT_KICKER);
+  }, []);
+
   const toggleSound = useCallback(() => setSoundOn((s) => !s), []);
   const toggleSim = useCallback(() => {
     setSimOn((s) => !s);
@@ -310,6 +360,8 @@ export function useScoreboard() {
     leader,
     topScore,
     totalPoints,
+    title,
+    kicker,
     deltas,
     shifts,
     lead,
@@ -324,6 +376,8 @@ export function useScoreboard() {
       renameTeam,
       resetScores,
       undo,
+      setTitle,
+      setKicker,
       toggleSound,
       toggleSim,
     },

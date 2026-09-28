@@ -3,10 +3,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Crown,
   FileSpreadsheet,
+  Flag,
   Ghost,
   ImageDown,
   Maximize2,
   Pause,
+  Pencil,
   Play,
   RotateCcw,
   Search,
@@ -22,6 +24,7 @@ import AddTeam from "./components/AddTeam";
 import AnimatedScore from "./components/AnimatedScore";
 import ExportSheet, { type ExportResult } from "./components/ExportSheet";
 import MaxView from "./components/MaxView";
+import Podium from "./components/Podium";
 import TeamRow from "./components/TeamRow";
 import { useScoreboard } from "./hooks/useScoreboard";
 import {
@@ -110,10 +113,21 @@ function LeadBanner({
 
 /* ------------------------------------ app ------------------------------------ */
 
+function titleFont(len: number): string {
+  if (len <= 9) return "clamp(2.9rem, 10vw, 6.25rem)";
+  if (len <= 14) return "clamp(2.1rem, 7.5vw, 4.5rem)";
+  return "clamp(1.45rem, 5.5vw, 3rem)";
+}
+
 export default function App() {
   const sb = useScoreboard();
   const [confirmReset, setConfirmReset] = useState(false);
   const [maximized, setMaximized] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(sb.title);
+  const [editingKicker, setEditingKicker] = useState(false);
+  const [kickerDraft, setKickerDraft] = useState(sb.kicker);
 
   const exitMax = useCallback(() => {
     setMaximized(false);
@@ -142,8 +156,39 @@ export default function App() {
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   const [query, setQuery] = useState("");
 
+  const endBoard = useCallback(() => {
+    if (sb.simOn) sb.actions.toggleSim();
+    setEnded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sb.simOn, sb.actions]);
+
+  const handleRematch = useCallback(() => {
+    sb.actions.resetScores();
+    setEnded(false);
+  }, [sb.actions]);
+
+  const startTitleEdit = () => {
+    setTitleDraft(sb.title);
+    setEditingTitle(true);
+  };
+
+  const commitTitle = () => {
+    sb.actions.setTitle(titleDraft);
+    setEditingTitle(false);
+  };
+
+  const startKickerEdit = () => {
+    setKickerDraft(sb.kicker);
+    setEditingKicker(true);
+  };
+
+  const commitKicker = () => {
+    sb.actions.setKicker(kickerDraft);
+    setEditingKicker(false);
+  };
+
   const handlePng = useCallback(async () => {
-    const blob = await renderStandingsPng(sb.teams);
+    const blob = await renderStandingsPng(sb.teams, sb.title, sb.kicker);
     if (!blob) return;
     const filename = `tally-board-${fileStamp()}.png`;
     triggerDownload(blob, filename);
@@ -154,7 +199,7 @@ export default function App() {
       blob,
       teamCount: sb.teams.length,
     });
-  }, [sb.teams]);
+  }, [sb.teams, sb.title, sb.kicker]);
 
   const handleCsv = useCallback(() => {
     const raw = makeCsvText(sb.teams);
@@ -172,9 +217,12 @@ export default function App() {
   }, [sb.teams]);
 
   const q = query.trim().toLowerCase();
+  let rankCounter = 0;
   const visibleTeams = sb.teams
-    .map((team, i) => ({ team, rank: i + 1 }))
+    .map((team) => ({ team, rank: team.score > 0 ? ++rankCounter : null }))
     .filter(({ team }) => !q || team.name.toLowerCase().includes(q));
+  const scoredRows = visibleTeams.filter((r) => r.rank !== null);
+  const unrankedRows = visibleTeams.filter((r) => r.rank === null);
 
   useEffect(() => {
     if (!confirmReset) return;
@@ -214,7 +262,7 @@ export default function App() {
 
       {/* ---------------------------------- header ---------------------------------- */}
       <header className="sticky top-0 z-40 border-b border-white/5 bg-ink/60 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4 md:px-8">
+        <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-3 px-4 md:px-8 xl:px-12">
           <div className="flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-volt text-black shadow-[0_8px_24px_-8px_rgba(200,245,66,0.7)]">
               <Zap size={16} strokeWidth={2.5} />
@@ -278,25 +326,96 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 md:px-8">
+      <main className="mx-auto w-full max-w-[1600px] px-4 md:px-8 xl:px-12">
         {/* ---------------------------------- hero ---------------------------------- */}
         <section className="pb-8 pt-12 md:pt-16">
           <div className="flex items-center gap-3">
             <span className="size-2 animate-pulse rounded-full bg-volt" />
             <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-white/45 md:text-[11px]">
-              Live session — positions resort on every point
+              Live session — click a title line below to rename it
             </p>
           </div>
 
           <div className="mt-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-            <h1 className="font-display text-[clamp(2.9rem,10vw,6.25rem)] font-extrabold leading-[0.94]">
-              <span className="text-volt">LIVE</span>
+            <h1 className="font-display font-extrabold leading-[0.94]">
+              {editingKicker ? (
+                <input
+                  autoFocus
+                  value={kickerDraft}
+                  maxLength={16}
+                  onChange={(e) => setKickerDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitKicker();
+                    if (e.key === "Escape") setEditingKicker(false);
+                  }}
+                  onBlur={commitKicker}
+                  placeholder="LIVE"
+                  aria-label="Kicker text"
+                  className="w-full min-w-0 max-w-lg bg-transparent font-display font-extrabold uppercase text-volt caret-white outline-none placeholder:text-white/20"
+                  style={{
+                    fontSize: titleFont(Math.max(4, kickerDraft.length)),
+                  }}
+                />
+              ) : (
+                <span className="group/kicker relative inline-block">
+                  <button
+                    type="button"
+                    onClick={startKickerEdit}
+                    aria-label="Edit kicker text"
+                    title="Click to edit"
+                    className="cursor-text text-left uppercase leading-[0.94] text-volt transition-opacity hover:opacity-70"
+                    style={{ fontSize: titleFont(sb.kicker.length) }}
+                  >
+                    {sb.kicker.toUpperCase()}
+                  </button>
+                  <Pencil
+                    size={15}
+                    className="pointer-events-none absolute -right-7 top-2 hidden text-white/0 transition-colors duration-200 group-hover/kicker:text-volt/70 md:block"
+                  />
+                </span>
+              )}
               <br />
-              <span className="text-outline">STANDINGS</span>
+              {editingTitle ? (
+                <input
+                  autoFocus
+                  value={titleDraft}
+                  maxLength={24}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitTitle();
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  onBlur={commitTitle}
+                  placeholder="COMPETITION TITLE"
+                  aria-label="Competition title"
+                  className="w-full min-w-0 max-w-lg bg-transparent font-display font-extrabold uppercase text-white caret-volt outline-none placeholder:text-white/20"
+                  style={{
+                    fontSize: titleFont(Math.max(4, titleDraft.length)),
+                  }}
+                />
+              ) : (
+                <span className="group/title relative inline-block">
+                  <button
+                    type="button"
+                    onClick={startTitleEdit}
+                    aria-label="Rename competition"
+                    title="Click to rename competition"
+                    className="text-outline cursor-text text-left uppercase leading-[0.94] transition-opacity hover:opacity-70"
+                    style={{ fontSize: titleFont(sb.title.length) }}
+                  >
+                    {sb.title.toUpperCase()}
+                  </button>
+                  <Pencil
+                    size={15}
+                    className="pointer-events-none absolute -right-7 top-2 hidden text-white/0 transition-colors duration-200 group-hover/title:text-white/60 md:block"
+                  />
+                </span>
+              )}
             </h1>
-            <p className="max-w-xs pb-2 text-sm leading-relaxed text-white/45">
-              Drop points from the right of each row. The moment totals change,
-              the board physically reshuffles — leaders get crowned mid-play.
+            <p className="max-w-xs pb-2 text-sm leading-relaxed text-white/45 lg:max-w-sm lg:text-base">
+              Tap the quick chips or type an exact amount in the ± field. The
+              moment totals change, the board reshuffles — leaders get crowned
+              mid-play.
             </p>
           </div>
 
@@ -388,12 +507,20 @@ export default function App() {
                 <Maximize2 size={11} />
                 MAXIMIZE
               </button>
+              <button
+                type="button"
+                onClick={endBoard}
+                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-400/10 px-2.5 py-1.5 font-mono text-[9px] font-bold tracking-[0.18em] text-amber-300 transition-all duration-150 hover:-translate-y-px hover:bg-amber-400/20 active:translate-y-0 active:scale-95"
+              >
+                <Flag size={11} />
+                END
+              </button>
             </div>
           </div>
 
           <motion.div layout className="flex flex-col gap-3">
             <AnimatePresence initial={false}>
-              {visibleTeams.map(({ team, rank }) => (
+              {scoredRows.map(({ team, rank }) => (
                 <TeamRow
                   key={team.id}
                   team={team}
@@ -408,6 +535,37 @@ export default function App() {
                 />
               ))}
             </AnimatePresence>
+
+            {unrankedRows.length > 0 && (
+              <>
+                {scoredRows.length > 0 && (
+                  <div className="flex items-center gap-3 pt-2">
+                    <span className="h-px flex-1 bg-white/10" />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/30">
+                      Unranked — score to join
+                    </span>
+                    <span className="h-px flex-1 bg-white/10" />
+                  </div>
+                )}
+                <AnimatePresence initial={false}>
+                  {unrankedRows.map(({ team }) => (
+                    <TeamRow
+                      key={team.id}
+                      team={team}
+                      rank={null}
+                      isLeader={false}
+                      unranked
+                      topScore={sb.topScore}
+                      delta={sb.deltas[team.id]}
+                      shift={sb.shifts[team.id]}
+                      onAdd={(amount) => sb.actions.addScore(team.id, amount)}
+                      onRename={(name) => sb.actions.renameTeam(team.id, name)}
+                      onRemove={() => sb.actions.removeTeam(team.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
 
             {sb.teams.length === 0 && (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/15 py-14 text-center">
@@ -437,6 +595,7 @@ export default function App() {
         {maximized && (
           <MaxView
             teams={sb.teams}
+            title={sb.title}
             totalPoints={sb.totalPoints}
             topScore={sb.topScore}
             deltas={sb.deltas}
@@ -444,6 +603,22 @@ export default function App() {
             onPng={handlePng}
             onCsv={handleCsv}
             onAdd={sb.actions.addScore}
+            onEnd={endBoard}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ------------------------------ end ceremony ------------------------------ */}
+      <AnimatePresence>
+        {ended && (
+          <Podium
+            teams={sb.teams}
+            title={sb.title}
+            totalPoints={sb.totalPoints}
+            onClose={() => setEnded(false)}
+            onPng={() => void handlePng()}
+            onCsv={handleCsv}
+            onRematch={handleRematch}
           />
         )}
       </AnimatePresence>

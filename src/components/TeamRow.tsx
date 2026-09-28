@@ -3,7 +3,6 @@ import { AnimatePresence, motion, type Transition } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Crown,
   Minus,
   Pencil,
   Trash2,
@@ -12,6 +11,7 @@ import type { RankShift, ScoreDelta, Team } from "../types";
 import { initialsOf } from "../types";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
+import ScoreInput from "./ScoreInput";
 
 const SPRING: Transition = {
   type: "spring",
@@ -22,8 +22,10 @@ const SPRING: Transition = {
 
 interface Props {
   team: Team;
-  rank: number;
+  /** null = zero score, not ranked */
+  rank: number | null;
   isLeader: boolean;
+  unranked?: boolean;
   topScore: number;
   delta?: ScoreDelta;
   shift?: RankShift;
@@ -87,6 +89,7 @@ export default function TeamRow({
   team,
   rank,
   isLeader,
+  unranked = false,
   topScore,
   delta,
   shift,
@@ -110,7 +113,11 @@ export default function TeamRow({
   }, [editing]);
 
   const pct =
-    topScore > 0 ? Math.max(3, Math.min(100, (team.score / topScore) * 100)) : 0;
+    team.score === 0
+      ? 0
+      : topScore > 0
+        ? Math.max(3, Math.min(100, (team.score / topScore) * 100))
+        : 0;
   const gap = topScore - team.score;
 
   const commitName = () => {
@@ -129,7 +136,9 @@ export default function TeamRow({
         "group relative overflow-hidden rounded-2xl border backdrop-blur-md transition-colors duration-300",
         isLeader
           ? "z-10 border-transparent"
-          : "z-0 border-white/8 bg-white/[0.03] hover:bg-white/[0.05]",
+          : unranked
+            ? "z-0 border-dashed border-white/10 bg-white/[0.015] opacity-85 hover:bg-white/[0.03]"
+            : "z-0 border-white/8 bg-white/[0.03] hover:bg-white/[0.05]",
       )}
       style={
         isLeader
@@ -173,11 +182,15 @@ export default function TeamRow({
             isLeader ? "text-[1.75rem] md:text-5xl" : "text-2xl md:text-4xl",
           )}
           style={{
-            color: isLeader ? team.color : "rgba(244,245,247,0.3)",
+            color: isLeader
+              ? team.color
+              : rank === null
+                ? "rgba(244,245,247,0.15)"
+                : "rgba(244,245,247,0.3)",
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {String(rank).padStart(2, "0")}
+          {rank === null ? "—" : String(rank).padStart(2, "0")}
         </div>
 
         {/* avatar */}
@@ -223,16 +236,6 @@ export default function TeamRow({
               >
                 {team.name}
               </button>
-            )}
-
-            {isLeader && (
-              <span
-                className="inline-flex animate-glow-pulse items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold tracking-[0.18em] text-black"
-                style={{ background: team.color }}
-              >
-                <Crown size={10} strokeWidth={2.5} />
-                LEADER
-              </span>
             )}
 
             <AnimatePresence mode="wait">
@@ -311,6 +314,8 @@ export default function TeamRow({
           <StepChip label="+1" onClick={() => onAdd(1)} />
           <StepChip label="+5" onClick={() => onAdd(5)} />
           <StepChip label="+10" onClick={() => onAdd(10)} color={team.color} />
+
+          <ScoreInput color={team.color} onSubmit={onAdd} />
 
           <span className="mx-1 hidden h-6 w-px bg-white/10 md:block" />
 

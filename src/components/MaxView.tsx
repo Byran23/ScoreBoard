@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
 import {
-  Crown,
   FileSpreadsheet,
+  Flag,
   ImageDown,
   Minimize2,
   Search,
@@ -14,6 +14,7 @@ import type { ScoreDelta, Team } from "../types";
 import { initialsOf } from "../types";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
+import ScoreInput from "./ScoreInput";
 import { MinusChip, StepChip } from "./TeamRow";
 
 const SPRING: Transition = {
@@ -34,7 +35,8 @@ function PresentRow({
   onAdd,
 }: {
   team: Team;
-  rank: number;
+  /** null = zero score, not ranked */
+  rank: number | null;
   isLeader: boolean;
   topScore: number;
   delta?: ScoreDelta;
@@ -55,7 +57,9 @@ function PresentRow({
         "relative overflow-hidden rounded-2xl border backdrop-blur-md",
         isLeader
           ? "z-10 border-transparent"
-          : "z-0 border-white/8 bg-white/[0.03]",
+          : rank === null
+            ? "z-0 border-dashed border-white/10 bg-white/[0.015] opacity-85"
+            : "z-0 border-white/8 bg-white/[0.03]",
       )}
       style={
         isLeader
@@ -95,11 +99,15 @@ function PresentRow({
             isLeader ? "text-3xl md:text-5xl" : "text-2xl md:text-4xl",
           )}
           style={{
-            color: isLeader ? team.color : "rgba(244,245,247,0.3)",
+            color: isLeader
+              ? team.color
+              : rank === null
+                ? "rgba(244,245,247,0.15)"
+                : "rgba(244,245,247,0.3)",
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {String(rank).padStart(2, "0")}
+          {rank === null ? "—" : String(rank).padStart(2, "0")}
         </div>
 
         <div
@@ -117,15 +125,6 @@ function PresentRow({
             <p className="truncate text-base font-semibold uppercase tracking-wide text-white/90 md:text-xl">
               {team.name}
             </p>
-            {isLeader && (
-              <span
-                className="inline-flex animate-glow-pulse items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold tracking-[0.18em] text-black"
-                style={{ background: team.color }}
-              >
-                <Crown size={10} strokeWidth={2.5} />
-                LEADER
-              </span>
-            )}
           </div>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
             {isLeader
@@ -172,6 +171,7 @@ function PresentRow({
           <StepChip label="+1" onClick={() => onAdd(1)} />
           <StepChip label="+5" onClick={() => onAdd(5)} />
           <StepChip label="+10" onClick={() => onAdd(10)} color={team.color} />
+          <ScoreInput color={team.color} onSubmit={onAdd} large />
         </div>
       </div>
     </motion.div>
@@ -182,6 +182,7 @@ function PresentRow({
 
 interface Props {
   teams: Team[];
+  title: string;
   totalPoints: number;
   topScore: number;
   deltas: Record<string, ScoreDelta>;
@@ -189,6 +190,7 @@ interface Props {
   onPng: () => void;
   onCsv: () => void;
   onAdd: (teamId: string, amount: number) => void;
+  onEnd: () => void;
 }
 
 function MaxAction({
@@ -215,13 +217,14 @@ function MaxAction({
       )}
     >
       {children}
-      <span className="hidden xl:inline">{label}</span>
+      <span className="hidden lg:inline">{label}</span>
     </button>
   );
 }
 
 export default function MaxView({
   teams,
+  title,
   totalPoints,
   topScore,
   deltas,
@@ -229,6 +232,7 @@ export default function MaxView({
   onPng,
   onCsv,
   onAdd,
+  onEnd,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -246,9 +250,12 @@ export default function MaxView({
   }, [onClose]);
 
   const q = query.trim().toLowerCase();
+  let rankCounter = 0;
   const rows = teams
-    .map((team, i) => ({ team, rank: i + 1 }))
+    .map((team) => ({ team, rank: team.score > 0 ? ++rankCounter : null }))
     .filter(({ team }) => !q || team.name.toLowerCase().includes(q));
+  const scoredRows = rows.filter((r) => r.rank !== null);
+  const unrankedRows = rows.filter((r) => r.rank === null);
 
   return (
     <motion.div
@@ -280,14 +287,14 @@ export default function MaxView({
 
       <div className="relative flex h-full flex-col">
         {/* top bar */}
-        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-4 backdrop-blur-md md:h-[72px] md:px-8">
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-4 backdrop-blur-md md:h-[72px] md:px-8 xl:px-12">
           <div className="flex min-w-0 shrink-0 items-center gap-2.5">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-volt text-black">
               <Zap size={16} strokeWidth={2.5} />
             </span>
             <div className="hidden min-w-0 lg:block">
               <p className="truncate font-display text-xs font-bold tracking-wide md:text-sm">
-                LIVE STANDINGS
+                {title.toUpperCase()}
               </p>
               <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.25em] text-white/40">
                 <span className="size-1.5 animate-pulse rounded-full bg-volt" />
@@ -329,6 +336,9 @@ export default function MaxView({
             <MaxAction onClick={onCsv} label="CSV">
               <FileSpreadsheet size={13} />
             </MaxAction>
+            <MaxAction onClick={onEnd} label="END">
+              <Flag size={13} />
+            </MaxAction>
             <MaxAction onClick={onClose} label="EXIT" accent>
               <Minimize2 size={13} />
             </MaxAction>
@@ -337,9 +347,9 @@ export default function MaxView({
 
         {/* board */}
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-6 md:px-8 md:py-10">
+          <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-4 py-6 md:px-8 md:py-10 xl:px-12">
             <AnimatePresence initial={false}>
-              {rows.map(({ team, rank }) => (
+              {scoredRows.map(({ team, rank }) => (
                 <PresentRow
                   key={team.id}
                   team={team}
@@ -351,6 +361,33 @@ export default function MaxView({
                 />
               ))}
             </AnimatePresence>
+
+            {unrankedRows.length > 0 && (
+              <>
+                {scoredRows.length > 0 && (
+                  <div className="flex items-center gap-3 pt-2">
+                    <span className="h-px flex-1 bg-white/10" />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/30">
+                      Unranked — score to join
+                    </span>
+                    <span className="h-px flex-1 bg-white/10" />
+                  </div>
+                )}
+                <AnimatePresence initial={false}>
+                  {unrankedRows.map(({ team }) => (
+                    <PresentRow
+                      key={team.id}
+                      team={team}
+                      rank={null}
+                      isLeader={false}
+                      topScore={topScore}
+                      delta={deltas[team.id]}
+                      onAdd={(amount) => onAdd(team.id, amount)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
 
             {teams.length === 0 && (
               <div className="rounded-2xl border border-dashed border-white/15 py-16 text-center font-mono text-[11px] uppercase tracking-[0.3em] text-white/30">

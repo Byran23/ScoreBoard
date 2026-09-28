@@ -31,10 +31,12 @@ export function triggerDownload(blob: Blob, filename: string) {
 /* ----------------------------------- CSV ------------------------------------ */
 
 export function makeCsvText(teams: Team[]): string {
+  let rank = 0;
   const rows = [
     "Rank,Team,Points",
     ...teams.map(
-      (t, i) => `${i + 1},"${t.name.replace(/"/g, '""')}",${t.score}`,
+      (t) =>
+        `${t.score > 0 ? ++rank : "NR"},"${t.name.replace(/"/g, '""')}",${t.score}`,
     ),
   ];
   return rows.join("\n");
@@ -60,7 +62,11 @@ function rr(
   ctx.closePath();
 }
 
-export async function renderStandingsPng(input: Team[]): Promise<Blob | null> {
+export async function renderStandingsPng(
+  input: Team[],
+  title = "STANDINGS",
+  kicker = "LIVE",
+): Promise<Blob | null> {
   const teams = [...input].sort((a, b) => b.score - a.score);
 
   try {
@@ -130,14 +136,25 @@ export async function renderStandingsPng(input: Team[]): Promise<Blob | null> {
   ctx.fillText(date, W - PADX, y);
   y += 78;
 
-  /* headline */
-  ctx.font = display(800, 60);
+  /* headline — kicker + competition title, auto-shrunk to fit */
+  const headlineKicker = kicker.toUpperCase();
+  const headlineTitle = title.toUpperCase();
+  let headSize = 60;
+  ctx.font = display(800, headSize);
+  const maxHeadW = W - 2 * PADX;
+  while (
+    ctx.measureText(`${headlineKicker} ${headlineTitle}`).width > maxHeadW &&
+    headSize > 26
+  ) {
+    headSize -= 4;
+    ctx.font = display(800, headSize);
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = volt;
-  ctx.fillText("LIVE", PADX, y);
-  const liveW = ctx.measureText("LIVE ").width;
+  ctx.fillText(headlineKicker, PADX, y);
+  const kickW = ctx.measureText(`${headlineKicker} `).width;
   ctx.fillStyle = white;
-  ctx.fillText("STANDINGS", PADX + liveW, y);
+  ctx.fillText(headlineTitle, PADX + kickW, y);
   y += 64;
 
   /* stat line */
@@ -180,12 +197,16 @@ export async function renderStandingsPng(input: Team[]): Promise<Blob | null> {
     ctx.fillStyle = t.color;
     ctx.fillRect(PADX, rowY, 5, ROW_H);
 
-    /* rank */
+    /* rank — zero score teams are unranked */
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.font = display(700, 28);
-    ctx.fillStyle = isLeader ? t.color : dim(0.3);
-    ctx.fillText(String(i + 1).padStart(2, "0"), PADX + 30, rowY + ROW_H / 2 - 1);
+    ctx.fillStyle = isLeader ? t.color : t.score === 0 ? dim(0.15) : dim(0.3);
+    ctx.fillText(
+      t.score > 0 ? String(i + 1).padStart(2, "0") : "—",
+      PADX + 30,
+      rowY + ROW_H / 2 - 1,
+    );
 
     /* initials chip */
     const chipX = PADX + 112;
@@ -205,19 +226,6 @@ export async function renderStandingsPng(input: Team[]): Promise<Blob | null> {
     const name = t.name.toUpperCase();
     ctx.fillText(name, chipX + chipS + 22, rowY + ROW_H / 2 + 2);
 
-    /* leader pill */
-    if (isLeader) {
-      const nw = ctx.measureText(name).width;
-      const px = chipX + chipS + 22 + nw + 18;
-      ctx.font = mono(800, 13);
-      const lw = ctx.measureText("LEADER").width;
-      ctx.fillStyle = t.color;
-      rr(ctx, px, rowY + ROW_H / 2 - 13, lw + 24, 26, 13);
-      ctx.fill();
-      ctx.fillStyle = "#06070b";
-      ctx.fillText("LEADER", px + 12, rowY + ROW_H / 2 + 1);
-    }
-
     /* score */
     ctx.font = mono(700, 32);
     ctx.textAlign = "right";
@@ -227,11 +235,18 @@ export async function renderStandingsPng(input: Team[]): Promise<Blob | null> {
     ctx.fillStyle = dim(0.35);
     ctx.fillText("PTS", W - PADX - 30, rowY + ROW_H / 2 + 2);
 
-    /* pace bar */
-    const pct = leaderScore > 0 ? Math.max(0.03, t.score / leaderScore) : 0;
-    ctx.fillStyle = `${t.color}cc`;
-    rr(ctx, PADX + 24, rowY + ROW_H - 12, (rowW - 48) * pct, 4, 2);
-    ctx.fill();
+    /* pace bar — none for unranked teams */
+    const pct =
+      t.score === 0
+        ? 0
+        : leaderScore > 0
+          ? Math.max(0.03, t.score / leaderScore)
+          : 0;
+    if (pct > 0) {
+      ctx.fillStyle = `${t.color}cc`;
+      rr(ctx, PADX + 24, rowY + ROW_H - 12, (rowW - 48) * pct, 4, 2);
+      ctx.fill();
+    }
   });
 
   /* footer */
