@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9ff5c"/>
+      <stop offset="1" stop-color="#a8e024"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#06070b"/>
+  <rect x="1.25" y="1.25" width="61.5" height="61.5" rx="13.75" fill="none" stroke="#c8f542" stroke-opacity="0.28" stroke-width="2.5"/>
+  <!-- podium bars: 2nd, 1st, 3rd -->
+  <rect x="11" y="34" width="11" height="17" rx="3" fill="#c8f542" fill-opacity="0.45"/>
+  <rect x="26.5" y="26" width="11" height="25" rx="3" fill="url(#g)"/>
+  <rect x="42" y="39" width="11" height="12" rx="3" fill="#c8f542" fill-opacity="0.3"/>
+  <!-- leader crown spark over 1st -->
+  <path d="M32 9.5l3.4 7.2 7.6 1-5.6 5.2 1.4 7.5L32 26.8l-6.8 3.6 1.4-7.5-5.6-5.2 7.6-1z" fill="url(#g)"/>
+</svg>

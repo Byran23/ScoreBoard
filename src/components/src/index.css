@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Unbounded", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-ink: #06070b;
+  --color-panel: #0a0c12;
+  --color-volt: #c8f542;
+
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-glow-pulse: glow-pulse 2.6s ease-in-out infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      opacity: 0.65;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+:root {
+  --accent-rgb: 200, 245, 66;
+  /* base foreground used by inline rgba() colors */
+  --fg-rgb: 244, 245, 247;
+  --grain-opacity: 0.05;
+  --outline-stroke: rgba(244, 245, 247, 0.5);
+  /* leaderboard row surface */
+  --board-rgb: 10, 12, 18;
+  --board-alpha: 0.55;
+}
+
+/**
+ * LIGHT MODE
+ * Tailwind v4 utilities resolve colors through CSS variables, so flipping
+ * --color-white inverts every white/x overlay (bg-white/5, text-white/90,
+ * border-white/10 …) across the whole app in one move.
+ */
+.light {
+  --color-white: #0b0d14;
+  --color-ink: #f2f3f7;
+  --color-panel: #ffffff;
+  --fg-rgb: 11, 13, 20;
+  --grain-opacity: 0.035;
+  --outline-stroke: rgba(11, 13, 20, 0.45);
+  --board-rgb: 255, 255, 255;
+}
+
+/**
+ * Leaderboard row surface — opacity is user-controlled so the wallpaper
+ * can show through as much or as little as desired.
+ */
+.board-surface {
+  background-color: rgba(var(--board-rgb), var(--board-alpha));
+  transition: background-color 0.25s ease;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: rgb(var(--fg-rgb));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+::selection {
+  background: var(--color-volt);
+  color: #06070b;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--fg-rgb), 0.18);
+  border-radius: 8px;
+  border: 2px solid var(--color-ink);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--fg-rgb), 0.3);
+}
+
+/* Hollow display type */
+.text-outline {
+  -webkit-text-stroke: 1.5px var(--outline-stroke);
+  color: transparent;
+}
+
+@media (min-width: 768px) {
+  .text-outline {
+    -webkit-text-stroke-width: 2px;
+  }
+}
+
+/* Film-grain overlay */
+.noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+input {
+  font-family: inherit;
+}
