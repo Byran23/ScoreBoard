@@ -17,9 +17,13 @@ interface Stored {
   background: string;
   palette: string;
   mode: Mode;
+  /** leaderboard surface opacity, 0 (glass) – 1 (solid) */
+  boardOpacity: number;
   /** data URL of a user-uploaded image, compressed */
   customImage: string | null;
 }
+
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
 function load(): Stored {
   const prefersLight =
@@ -30,6 +34,7 @@ function load(): Stored {
     background: "arena",
     palette: "neon",
     mode: prefersLight ? "light" : "dark",
+    boardOpacity: 0.55,
     customImage: null,
   };
   try {
@@ -42,6 +47,10 @@ function load(): Stored {
         typeof p.background === "string" ? p.background : fallback.background,
       palette: typeof p.palette === "string" ? p.palette : fallback.palette,
       mode: p.mode === "light" || p.mode === "dark" ? p.mode : fallback.mode,
+      boardOpacity:
+        typeof p.boardOpacity === "number" && Number.isFinite(p.boardOpacity)
+          ? clamp01(p.boardOpacity)
+          : fallback.boardOpacity,
       customImage:
         typeof p.customImage === "string" ? p.customImage : fallback.customImage,
     };
@@ -87,6 +96,14 @@ export function useTheme() {
     document.body.style.setProperty("--accent", accentColor);
   }, [accentColor, isLight]);
 
+  /* leaderboard surface opacity */
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--board-alpha",
+      String(state.boardOpacity),
+    );
+  }, [state.boardOpacity]);
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -109,6 +126,10 @@ export function useTheme() {
   );
   const setMode = useCallback(
     (m: Mode) => setState((s) => ({ ...s, mode: m })),
+    [],
+  );
+  const setBoardOpacity = useCallback(
+    (v: number) => setState((s) => ({ ...s, boardOpacity: clamp01(v) })),
     [],
   );
   const toggleMode = useCallback(
@@ -138,6 +159,8 @@ export function useTheme() {
     palette,
     mode,
     isLight,
+    boardOpacity: state.boardOpacity,
+    setBoardOpacity,
     customImage: state.customImage,
     setAccent,
     setBackground,

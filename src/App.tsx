@@ -651,6 +651,8 @@ export default function App() {
             palette={theme.palette}
             customImage={theme.customImage}
             mode={theme.mode}
+            boardOpacity={theme.boardOpacity}
+            onBoardOpacity={theme.setBoardOpacity}
             onMode={theme.setMode}
             onAccent={theme.setAccent}
             onBackground={theme.setBackground}

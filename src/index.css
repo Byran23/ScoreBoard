@@ -38,6 +38,9 @@
   --fg-rgb: 244, 245, 247;
   --grain-opacity: 0.05;
   --outline-stroke: rgba(244, 245, 247, 0.5);
+  /* leaderboard row surface */
+  --board-rgb: 10, 12, 18;
+  --board-alpha: 0.55;
 }
 
 /**
@@ -53,6 +56,16 @@
   --fg-rgb: 11, 13, 20;
   --grain-opacity: 0.035;
   --outline-stroke: rgba(11, 13, 20, 0.45);
+  --board-rgb: 255, 255, 255;
+}
+
+/**
+ * Leaderboard row surface — opacity is user-controlled so the wallpaper
+ * can show through as much or as little as desired.
+ */
+.board-surface {
+  background-color: rgba(var(--board-rgb), var(--board-alpha));
+  transition: background-color 0.25s ease;
 }
 
 body {

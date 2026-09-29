@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
+  Contrast,
   Image,
   Loader2,
   Moon,
@@ -28,6 +29,8 @@ interface Props {
   palette: Palette;
   customImage: string | null;
   mode: Mode;
+  boardOpacity: number;
+  onBoardOpacity: (v: number) => void;
   onMode: (m: Mode) => void;
   onAccent: (id: string) => void;
   onBackground: (id: string) => void;
@@ -59,6 +62,8 @@ export default function ThemePanel({
   palette,
   customImage,
   mode,
+  boardOpacity,
+  onBoardOpacity,
   onMode,
   onAccent,
   onBackground,
@@ -333,6 +338,63 @@ export default function ThemePanel({
             )}
             <p className="mt-2 font-mono text-[9px] uppercase leading-relaxed tracking-[0.15em] text-white/25">
               Uploads are compressed and stored in this browser only.
+            </p>
+          </div>
+
+          {/* board opacity */}
+          <div className="mt-7">
+            <SectionLabel icon={<Contrast size={11} />}>
+              Leaderboard opacity
+            </SectionLabel>
+
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">
+                  Glass
+                </span>
+                <span className="font-mono text-sm font-bold tabular-nums text-volt">
+                  {Math.round(boardOpacity * 100)}%
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">
+                  Solid
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(boardOpacity * 100)}
+                onChange={(e) => onBoardOpacity(Number(e.target.value) / 100)}
+                aria-label="Leaderboard opacity"
+                className="mt-2.5 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/15 accent-volt outline-none [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-volt [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-volt [&::-webkit-slider-thumb]:shadow-[0_2px_10px_rgba(var(--accent-rgb),0.6)]"
+              />
+
+              <div className="mt-3 flex gap-1.5">
+                {[
+                  { label: "GLASS", v: 0.2 },
+                  { label: "BALANCED", v: 0.55 },
+                  { label: "SOLID", v: 0.92 },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => onBoardOpacity(p.v)}
+                    className={cn(
+                      "flex-1 cursor-pointer rounded-lg border py-1.5 font-mono text-[8px] font-bold tracking-[0.15em] transition-all hover:-translate-y-px active:scale-95",
+                      Math.abs(boardOpacity - p.v) < 0.03
+                        ? "border-volt/50 bg-volt/12 text-volt"
+                        : "border-white/10 bg-white/[0.03] text-white/45 hover:text-white/80",
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="mt-2 font-mono text-[9px] uppercase leading-relaxed tracking-[0.15em] text-white/25">
+              Lower values let the wallpaper show through the rows.
             </p>
           </div>
 

@@ -138,17 +138,17 @@ export default function TeamRow({
       exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.22 } }}
       transition={SPRING}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border backdrop-blur-md transition-colors duration-300",
+        "board-surface group relative overflow-hidden rounded-2xl border backdrop-blur-md transition-colors duration-300",
         isLeader
           ? "z-10 border-transparent"
           : unranked
-            ? "z-0 border-dashed border-white/10 bg-white/[0.015] opacity-85 hover:bg-white/[0.03]"
-            : "z-0 border-white/8 bg-white/[0.03] hover:bg-white/[0.05]",
+            ? "z-0 border-dashed border-white/10 opacity-85"
+            : "z-0 border-white/8",
       )}
       style={
         isLeader
           ? {
-              background: `linear-gradient(120deg, ${team.color}1a, rgba(255,255,255,0.04) 55%)`,
+              backgroundImage: `linear-gradient(120deg, ${team.color}2e, rgba(255,255,255,0.04) 55%)`,
               boxShadow: `0 0 0 1px ${team.color}59, 0 24px 80px -30px ${team.color}66`,
             }
           : undefined
