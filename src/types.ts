@@ -49,6 +49,39 @@ export function initialsOf(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
 }
 
+export interface RankedTeam {
+  team: Team;
+  /** null = zero score, unranked. Ties share the same rank (1-2-2-4). */
+  rank: number | null;
+  /** true when another team shares this rank */
+  tied: boolean;
+}
+
+/**
+ * Standard competition ranking: equal scores share a rank and the
+ * following rank skips accordingly (1, 2, 2, 4 …). Zero-score teams
+ * are never ranked.
+ */
+export function rankTeams(sorted: Team[]): RankedTeam[] {
+  const scored = sorted.filter((t) => t.score > 0);
+
+  const rankByScore = new Map<number, number>();
+  const countByScore = new Map<number, number>();
+  scored.forEach((t, i) => {
+    if (!rankByScore.has(t.score)) rankByScore.set(t.score, i + 1);
+    countByScore.set(t.score, (countByScore.get(t.score) ?? 0) + 1);
+  });
+
+  return sorted.map((team) => {
+    if (team.score <= 0) return { team, rank: null, tied: false };
+    return {
+      team,
+      rank: rankByScore.get(team.score) ?? null,
+      tied: (countByScore.get(team.score) ?? 0) > 1,
+    };
+  });
+}
+
 function hslToHex(h: number, s: number, l: number): string {
   const sn = s / 100;
   const ln = l / 100;

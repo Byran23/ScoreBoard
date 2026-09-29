@@ -9,6 +9,7 @@ import {
   Team,
   colorForIndex,
   makeId,
+  rankTeams,
 } from "../types";
 import { sfx } from "../lib/sound";
 
@@ -35,9 +36,9 @@ export function sortTeams(list: Team[]): Team[] {
 
 function rankMapOf(list: Team[]): Map<string, number> {
   const map = new Map<string, number>();
-  sortTeams(list)
-    .filter((t) => t.score > 0)
-    .forEach((t, i) => map.set(t.id, i + 1));
+  rankTeams(sortTeams(list)).forEach(({ team, rank }) => {
+    if (rank !== null) map.set(team.id, rank);
+  });
   return map;
 }
 
@@ -45,6 +46,14 @@ function leadTeamOf(list: Team[]): Team | null {
   if (list.length === 0) return null;
   const top = sortTeams(list)[0];
   return top.score > 0 ? top : null;
+}
+
+/** true when two or more teams share the top score */
+function isLeadTied(list: Team[]): boolean {
+  const scored = list.filter((t) => t.score > 0);
+  if (scored.length < 2) return false;
+  const top = Math.max(...scored.map((t) => t.score));
+  return scored.filter((t) => t.score === top).length > 1;
 }
 
 function loadTeams(): Team[] {
@@ -202,7 +211,15 @@ export function useScoreboard(palette: string[] = PALETTE) {
       const prevLead = leadTeamOf(prev);
       const nextLead = leadTeamOf(next);
 
-      if (nextLead && prevLead?.id !== nextLead.id && opts.celebrate !== false) {
+      /* a shared top score isn't a lead change — nobody "takes" the lead */
+      const tiedAtTop = isLeadTied(next);
+
+      if (
+        nextLead &&
+        !tiedAtTop &&
+        prevLead?.id !== nextLead.id &&
+        opts.celebrate !== false
+      ) {
         const at = Date.now();
         setLead({ teamId: nextLead.id, at });
         window.setTimeout(() => {
@@ -365,8 +382,10 @@ export function useScoreboard(palette: string[] = PALETTE) {
 
   /* ---------------------------------- derived ---------------------------------- */
   const sortedTeams = useMemo(() => sortTeams(teams), [teams]);
+  const ranked = useMemo(() => rankTeams(sortedTeams), [sortedTeams]);
   const leader =
     sortedTeams.length > 0 && sortedTeams[0].score > 0 ? sortedTeams[0] : null;
+  const leaderTied = useMemo(() => isLeadTied(teams), [teams]);
   const topScore = leader?.score ?? 0;
   const totalPoints = useMemo(
     () => teams.reduce((sum, t) => sum + t.score, 0),
@@ -375,7 +394,9 @@ export function useScoreboard(palette: string[] = PALETTE) {
 
   return {
     teams: sortedTeams,
+    ranked,
     leader,
+    leaderTied,
     topScore,
     totalPoints,
     title,

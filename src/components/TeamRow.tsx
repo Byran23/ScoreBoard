@@ -25,6 +25,8 @@ interface Props {
   team: Team;
   /** null = zero score, not ranked */
   rank: number | null;
+  /** shares this rank with another team */
+  tied?: boolean;
   isLeader: boolean;
   unranked?: boolean;
   topScore: number;
@@ -89,6 +91,7 @@ export function MinusChip({ onClick }: { onClick: () => void }) {
 export default function TeamRow({
   team,
   rank,
+  tied = false,
   isLeader,
   unranked = false,
   topScore,
@@ -191,7 +194,21 @@ export default function TeamRow({
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {rank === null ? "—" : String(rank).padStart(2, "0")}
+          {rank === null ? (
+            "—"
+          ) : (
+            <>
+              {tied && (
+                <span
+                  className="mr-0.5 align-top text-[0.45em] font-bold opacity-70"
+                  title="Tied rank"
+                >
+                  T
+                </span>
+              )}
+              {String(rank).padStart(2, "0")}
+            </>
+          )}
         </div>
 
         {/* avatar */}
@@ -277,10 +294,10 @@ export default function TeamRow({
           </div>
 
           <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
-            {isLeader
-              ? "Setting the pace"
-              : gap === 0 && team.score > 0
-                ? "Level at the top"
+            {gap === 0 && team.score > 0 && tied
+              ? "Tied for the lead"
+              : isLeader
+                ? "Setting the pace"
                 : team.score === 0
                   ? "Waiting for first points"
                   : `Gap to lead −${gap} pts`}

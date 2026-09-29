@@ -225,10 +225,9 @@ export default function App() {
   }, [sb.teams]);
 
   const q = query.trim().toLowerCase();
-  let rankCounter = 0;
-  const visibleTeams = sb.teams
-    .map((team) => ({ team, rank: team.score > 0 ? ++rankCounter : null }))
-    .filter(({ team }) => !q || team.name.toLowerCase().includes(q));
+  const visibleTeams = sb.ranked.filter(
+    ({ team }) => !q || team.name.toLowerCase().includes(q),
+  );
   const scoredRows = visibleTeams.filter((r) => r.rank !== null);
   const unrankedRows = visibleTeams.filter((r) => r.rank === null);
 
@@ -440,7 +439,11 @@ export default function App() {
                 className="mt-2 truncate text-sm font-bold uppercase tracking-wide md:text-base"
                 style={{ color: sb.leader?.color ?? "rgba(var(--fg-rgb), 0.45)" }}
               >
-                {sb.leader ? sb.leader.name : "No leader yet"}
+                {sb.leader
+                  ? sb.leaderTied
+                    ? `Tied — ${sb.leader.name}`
+                    : sb.leader.name
+                  : "No leader yet"}
               </p>
             </div>
             <div className="px-4 py-4 md:px-6">
@@ -531,11 +534,12 @@ export default function App() {
 
           <motion.div layout className="flex flex-col gap-3">
             <AnimatePresence initial={false}>
-              {scoredRows.map(({ team, rank }) => (
+              {scoredRows.map(({ team, rank, tied }) => (
                 <TeamRow
                   key={team.id}
                   team={team}
                   rank={rank}
+                  tied={tied}
                   isLeader={rank === 1 && team.score > 0}
                   topScore={sb.topScore}
                   delta={sb.deltas[team.id]}

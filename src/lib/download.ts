@@ -1,5 +1,5 @@
 import type { Team } from "../types";
-import { initialsOf } from "../types";
+import { initialsOf, rankTeams } from "../types";
 
 /* --------------------------------- helpers ---------------------------------- */
 
@@ -31,12 +31,14 @@ export function triggerDownload(blob: Blob, filename: string) {
 /* ----------------------------------- CSV ------------------------------------ */
 
 export function makeCsvText(teams: Team[]): string {
-  let rank = 0;
+  const sorted = [...teams].sort((a, b) => b.score - a.score);
   const rows = [
-    "Rank,Team,Points",
-    ...teams.map(
-      (t) =>
-        `${t.score > 0 ? ++rank : "NR"},"${t.name.replace(/"/g, '""')}",${t.score}`,
+    "Rank,Team,Points,Tied",
+    ...rankTeams(sorted).map(
+      ({ team, rank, tied }) =>
+        `${rank ?? "NR"},"${team.name.replace(/"/g, '""')}",${team.score},${
+          tied ? "YES" : "NO"
+        }`,
     ),
   ];
   return rows.join("\n");
@@ -176,12 +178,13 @@ export async function renderStandingsPng(
   ctx.stroke();
   y += 28;
 
-  /* rows */
+  /* rows — ties share a rank */
   const leaderScore = teams[0]?.score ?? 0;
+  const rankedRows = rankTeams(teams);
 
-  teams.forEach((t, i) => {
+  rankedRows.forEach(({ team: t, rank, tied }, i) => {
     const rowY = y + i * (ROW_H + GAP);
-    const isLeader = i === 0 && t.score > 0;
+    const isLeader = rank === 1;
     const rowW = W - 2 * PADX;
 
     rr(ctx, PADX, rowY, rowW, ROW_H, 20);
@@ -201,9 +204,11 @@ export async function renderStandingsPng(
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.font = display(700, 28);
-    ctx.fillStyle = isLeader ? t.color : t.score === 0 ? dim(0.15) : dim(0.3);
+    ctx.fillStyle = isLeader ? t.color : rank === null ? dim(0.15) : dim(0.3);
     ctx.fillText(
-      t.score > 0 ? String(i + 1).padStart(2, "0") : "—",
+      rank === null
+        ? "—"
+        : `${tied ? "T" : ""}${String(rank).padStart(2, "0")}`,
       PADX + 30,
       rowY + ROW_H / 2 - 1,
     );

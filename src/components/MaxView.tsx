@@ -12,7 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { ScoreDelta, Team } from "../types";
-import { initialsOf } from "../types";
+import { initialsOf, rankTeams } from "../types";
 import type { Background } from "../lib/themes";
 import { cn } from "../utils/cn";
 import Backdrop from "./Backdrop";
@@ -32,6 +32,7 @@ const SPRING: Transition = {
 function PresentRow({
   team,
   rank,
+  tied = false,
   isLeader,
   topScore,
   delta,
@@ -40,6 +41,7 @@ function PresentRow({
   team: Team;
   /** null = zero score, not ranked */
   rank: number | null;
+  tied?: boolean;
   isLeader: boolean;
   topScore: number;
   delta?: ScoreDelta;
@@ -110,7 +112,21 @@ function PresentRow({
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {rank === null ? "—" : String(rank).padStart(2, "0")}
+          {rank === null ? (
+            "—"
+          ) : (
+            <>
+              {tied && (
+                <span
+                  className="mr-0.5 align-top text-[0.45em] font-bold opacity-70"
+                  title="Tied rank"
+                >
+                  T
+                </span>
+              )}
+              {String(rank).padStart(2, "0")}
+            </>
+          )}
         </div>
 
         <div
@@ -140,10 +156,10 @@ function PresentRow({
             )}
           </div>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
-            {isLeader
-              ? "Setting the pace"
-              : gap === 0 && team.score > 0
-                ? "Level at the top"
+            {gap === 0 && team.score > 0 && tied
+              ? "Tied for the lead"
+              : isLeader
+                ? "Setting the pace"
                 : team.score === 0
                   ? "Waiting for first points"
                   : `Gap to lead −${gap} pts`}
@@ -267,10 +283,9 @@ export default function MaxView({
   }, [onClose]);
 
   const q = query.trim().toLowerCase();
-  let rankCounter = 0;
-  const rows = teams
-    .map((team) => ({ team, rank: team.score > 0 ? ++rankCounter : null }))
-    .filter(({ team }) => !q || team.name.toLowerCase().includes(q));
+  const rows = rankTeams(teams).filter(
+    ({ team }) => !q || team.name.toLowerCase().includes(q),
+  );
   const scoredRows = rows.filter((r) => r.rank !== null);
   const unrankedRows = rows.filter((r) => r.rank === null);
 
@@ -351,11 +366,12 @@ export default function MaxView({
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-4 py-6 md:px-8 md:py-10 xl:px-12">
             <AnimatePresence initial={false}>
-              {scoredRows.map(({ team, rank }) => (
+              {scoredRows.map(({ team, rank, tied }) => (
                 <PresentRow
                   key={team.id}
                   team={team}
                   rank={rank}
+                  tied={tied}
                   isLeader={rank === 1 && team.score > 0}
                   topScore={topScore}
                   delta={deltas[team.id]}

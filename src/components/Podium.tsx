@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { Team } from "../types";
+import { rankTeams } from "../types";
 import type { Background } from "../lib/themes";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
@@ -58,10 +59,12 @@ function CeremonyAction({
 function PodiumColumn({
   team,
   place,
+  tied = false,
   delay,
 }: {
   team: Team;
   place: 1 | 2 | 3;
+  tied?: boolean;
   delay: number;
 }) {
   const medal = MEDAL_COLORS[place - 1];
@@ -157,7 +160,7 @@ function PodiumColumn({
           {PLACE_LABELS[place - 1]}
         </span>
         <span className="mt-1.5 font-mono text-[8px] uppercase tracking-[0.3em] text-white/35 md:text-[9px]">
-          Place
+          {tied ? "Tied place" : "Place"}
         </span>
       </div>
     </motion.div>
@@ -191,12 +194,16 @@ export default function Podium({
 }: Props) {
   const [confirmRematch, setConfirmRematch] = useState(false);
 
-  /* zero-score teams are unranked and never medal */
-  const scored = teams.filter((t) => t.score > 0);
-  const unranked = teams.filter((t) => t.score === 0);
-  const top3 = scored.slice(0, 3);
-  const rest = scored.slice(3);
-  const winner = top3[0];
+  /* zero-score teams are unranked and never medal; ties share a rank */
+  const ranked = rankTeams(teams);
+  const unranked = ranked.filter((r) => r.rank === null).map((r) => r.team);
+  const scoredRanked = ranked.filter(
+    (r): r is { team: Team; rank: number; tied: boolean } => r.rank !== null,
+  );
+  /* everyone ranked 1-3 stands on the podium, so ties get equal medals */
+  const podium = scoredRanked.filter((r) => r.rank <= 3);
+  const rest = scoredRanked.filter((r) => r.rank > 3);
+  const winner = podium.find((r) => r.rank === 1)?.team;
 
   /* celebration confetti on mount */
   useEffect(() => {
@@ -261,12 +268,19 @@ export default function Podium({
     return () => window.clearTimeout(t);
   }, [confirmRematch]);
 
-  const columns = [
-    { team: top3[1] as Team | undefined, place: 2 as const, delay: 0.2 },
-    { team: top3[0] as Team | undefined, place: 1 as const, delay: 0.5 },
-    { team: top3[2] as Team | undefined, place: 3 as const, delay: 0.35 },
-  ].filter((c): c is { team: Team; place: 1 | 2 | 3; delay: number } =>
-    Boolean(c.team),
+  /* order visually as 2nd · 1st · 3rd, keeping every tied team on its step */
+  const delayFor = (place: number) =>
+    place === 1 ? 0.5 : place === 2 ? 0.2 : 0.35;
+  const visualOrder = [2, 1, 3];
+  const columns = visualOrder.flatMap((place) =>
+    podium
+      .filter((r) => r.rank === place)
+      .map((r) => ({
+        team: r.team,
+        place: r.rank as 1 | 2 | 3,
+        tied: r.tied,
+        delay: delayFor(place),
+      })),
   );
 
   return (
@@ -380,11 +394,12 @@ export default function Podium({
           {/* podium steps */}
           {columns.length > 0 && (
             <div className="mt-10 flex w-full max-w-4xl items-end justify-center gap-2 sm:gap-4 md:mt-14 md:gap-10">
-              {columns.map(({ team, place, delay }) => (
+              {columns.map(({ team, place, tied, delay }) => (
                 <PodiumColumn
                   key={team.id}
                   team={team}
                   place={place}
+                  tied={tied}
                   delay={delay}
                 />
               ))}
@@ -398,7 +413,7 @@ export default function Podium({
                 Full results
               </p>
               <div className="mt-3 flex flex-col gap-2">
-                {rest.map((t, i) => (
+                {rest.map(({ team: t, rank, tied }, i) => (
                   <motion.div
                     key={t.id}
                     initial={{ opacity: 0, y: 16 }}
@@ -406,8 +421,11 @@ export default function Podium({
                     transition={{ delay: 0.7 + i * 0.04 }}
                     className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2.5"
                   >
-                    <span className="w-8 shrink-0 font-mono text-sm font-bold tabular-nums text-white/30">
-                      {String(i + 4).padStart(2, "0")}
+                    <span className="w-10 shrink-0 font-mono text-sm font-bold tabular-nums text-white/30">
+                      {tied && (
+                        <span className="mr-0.5 text-[9px] opacity-70">T</span>
+                      )}
+                      {String(rank).padStart(2, "0")}
                     </span>
                     <span
                       className="size-2.5 shrink-0 rounded-full"
