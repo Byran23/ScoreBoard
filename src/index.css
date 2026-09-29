@@ -6,6 +6,7 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-ink: #06070b;
+  --color-panel: #0a0c12;
   --color-volt: #c8f542;
 
   --animate-marquee: marquee 32s linear infinite;
@@ -33,15 +34,37 @@
 
 :root {
   --accent-rgb: 200, 245, 66;
+  /* base foreground used by inline rgba() colors */
+  --fg-rgb: 244, 245, 247;
+  --grain-opacity: 0.05;
+  --outline-stroke: rgba(244, 245, 247, 0.5);
+}
+
+/**
+ * LIGHT MODE
+ * Tailwind v4 utilities resolve colors through CSS variables, so flipping
+ * --color-white inverts every white/x overlay (bg-white/5, text-white/90,
+ * border-white/10 …) across the whole app in one move.
+ */
+.light {
+  --color-white: #0b0d14;
+  --color-ink: #f2f3f7;
+  --color-panel: #ffffff;
+  --fg-rgb: 11, 13, 20;
+  --grain-opacity: 0.035;
+  --outline-stroke: rgba(11, 13, 20, 0.45);
 }
 
 body {
-  background-color: #06070b;
-  color: #f4f5f7;
+  background-color: var(--color-ink);
+  color: rgb(var(--fg-rgb));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
 }
 
 ::selection {
@@ -56,17 +79,17 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(var(--fg-rgb), 0.18);
   border-radius: 8px;
-  border: 2px solid #06070b;
+  border: 2px solid var(--color-ink);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.26);
+  background: rgba(var(--fg-rgb), 0.3);
 }
 
 /* Hollow display type */
 .text-outline {
-  -webkit-text-stroke: 1.5px rgba(244, 245, 247, 0.5);
+  -webkit-text-stroke: 1.5px var(--outline-stroke);
   color: transparent;
 }
 

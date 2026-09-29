@@ -105,8 +105,8 @@ function PresentRow({
             color: isLeader
               ? team.color
               : rank === null
-                ? "rgba(244,245,247,0.15)"
-                : "rgba(244,245,247,0.3)",
+                ? "rgba(var(--fg-rgb), 0.18)"
+                : "rgba(var(--fg-rgb), 0.35)",
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
@@ -197,6 +197,7 @@ interface Props {
   teams: Team[];
   title: string;
   background: Background;
+  isLight: boolean;
   totalPoints: number;
   topScore: number;
   deltas: Record<string, ScoreDelta>;
@@ -240,6 +241,7 @@ export default function MaxView({
   teams,
   title,
   background,
+  isLight,
   totalPoints,
   topScore,
   deltas,
@@ -283,7 +285,7 @@ export default function MaxView({
       className="fixed inset-0 z-[80] bg-ink"
     >
       {/* backdrop */}
-      <Backdrop background={background} fixed={false} />
+      <Backdrop background={background} isLight={isLight} fixed={false} />
 
       <div className="relative flex h-full flex-col">
         {/* top bar */}

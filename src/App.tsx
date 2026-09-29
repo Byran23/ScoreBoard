@@ -11,8 +11,10 @@ import {
   Pencil,
   Play,
   RotateCcw,
+  Moon,
   Search,
   Sparkles,
+  Sun,
   Trophy,
   Undo2,
   Users,
@@ -247,7 +249,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen">
       {/* --------------------------------- backdrop --------------------------------- */}
-      <Backdrop background={theme.background} />
+      <Backdrop background={theme.background} isLight={theme.isLight} />
 
       <LeadBanner lead={leadInfo} />
 
@@ -312,6 +314,17 @@ export default function App() {
               wide={<span className="hidden lg:inline">SFX</span>}
             >
               {sb.soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            </HeaderButton>
+            <HeaderButton
+              label={theme.isLight ? "LIGHT" : "DARK"}
+              onClick={theme.toggleMode}
+              wide={
+                <span className="hidden lg:inline">
+                  {theme.isLight ? "LIGHT" : "DARK"}
+                </span>
+              }
+            >
+              {theme.isLight ? <Sun size={13} /> : <Moon size={13} />}
             </HeaderButton>
             <HeaderButton
               label="THEME"
@@ -425,7 +438,7 @@ export default function App() {
               </p>
               <p
                 className="mt-2 truncate text-sm font-bold uppercase tracking-wide md:text-base"
-                style={{ color: sb.leader?.color ?? "rgba(244,245,247,0.4)" }}
+                style={{ color: sb.leader?.color ?? "rgba(var(--fg-rgb), 0.45)" }}
               >
                 {sb.leader ? sb.leader.name : "No leader yet"}
               </p>
@@ -595,6 +608,7 @@ export default function App() {
             teams={sb.teams}
             title={sb.title}
             background={theme.background}
+            isLight={theme.isLight}
             totalPoints={sb.totalPoints}
             topScore={sb.topScore}
             deltas={sb.deltas}
@@ -614,6 +628,7 @@ export default function App() {
             teams={sb.teams}
             title={sb.title}
             background={theme.background}
+            isLight={theme.isLight}
             totalPoints={sb.totalPoints}
             onClose={() => setEnded(false)}
             onPng={() => void handlePng()}
@@ -631,6 +646,8 @@ export default function App() {
             background={theme.background}
             palette={theme.palette}
             customImage={theme.customImage}
+            mode={theme.mode}
+            onMode={theme.setMode}
             onAccent={theme.setAccent}
             onBackground={theme.setBackground}
             onPalette={theme.setPalette}

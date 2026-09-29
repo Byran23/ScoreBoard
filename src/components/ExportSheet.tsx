@@ -89,7 +89,7 @@ export default function ExportSheet({
         exit={{ y: 32, opacity: 0, scale: 0.98 }}
         transition={{ type: "spring", stiffness: 380, damping: 34 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#0a0c12] shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)] sm:rounded-3xl"
+        className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-panel shadow-[0_40px_120px_-30px_rgba(0,0,0,0.5)] sm:rounded-3xl"
       >
         {/* header */}
         <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4 md:px-6">

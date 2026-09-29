@@ -123,7 +123,9 @@ function PodiumColumn({
       </p>
       <p
         className="mt-1 flex items-baseline gap-1 font-mono font-bold tabular-nums"
-        style={{ color: place === 1 ? team.color : "rgba(244,245,247,0.85)" }}
+        style={{
+          color: place === 1 ? team.color : "rgba(var(--fg-rgb), 0.85)",
+        }}
       >
         <AnimatedScore
           value={team.score}
@@ -168,6 +170,7 @@ interface Props {
   teams: Team[];
   title: string;
   background: Background;
+  isLight: boolean;
   totalPoints: number;
   onClose: () => void;
   onPng: () => void;
@@ -179,6 +182,7 @@ export default function Podium({
   teams,
   title,
   background,
+  isLight,
   totalPoints,
   onClose,
   onPng,
@@ -276,7 +280,11 @@ export default function Podium({
       className="fixed inset-0 z-[90] overflow-y-auto bg-ink"
     >
       {/* backdrop */}
-      <Backdrop background={background} glow="rgba(255,211,77,0.12)" />
+      <Backdrop
+        background={background}
+        isLight={isLight}
+        glow="rgba(255,211,77,0.12)"
+      />
 
       {/* winner spotlight */}
       {winner && (

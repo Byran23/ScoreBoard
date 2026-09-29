@@ -206,3 +206,23 @@ export function hexToRgbTriplet(hex: string): string {
   const n = parseInt(full, 16);
   return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 }
+
+/** Deepen a hex color by `amount` (0-1) so bright accents stay legible on light surfaces. */
+export function darkenHex(hex: string, amount: number): string {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const n = parseInt(full, 16);
+  const f = Math.max(0, Math.min(1, 1 - amount));
+  const r = Math.round(((n >> 16) & 255) * f);
+  const g = Math.round(((n >> 8) & 255) * f);
+  const b = Math.round((n & 255) * f);
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+export type Mode = "dark" | "light";

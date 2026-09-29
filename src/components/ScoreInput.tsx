@@ -72,7 +72,7 @@ export default function ScoreInput({ color, onSubmit, large = false }: Props) {
         style={{
           borderColor: "rgba(255,255,255,0.1)",
           background: valid ? color : "transparent",
-          color: valid ? "#06070b" : "rgba(244,245,247,0.5)",
+          color: valid ? "#06070b" : "rgba(var(--fg-rgb), 0.5)",
         }}
       >
         <Check size={13} strokeWidth={3} />

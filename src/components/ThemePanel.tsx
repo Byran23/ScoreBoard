@@ -4,8 +4,10 @@ import {
   Check,
   Image,
   Loader2,
+  Moon,
   Palette as PaletteIcon,
   Sparkles,
+  Sun,
   Upload,
   X,
 } from "lucide-react";
@@ -15,6 +17,7 @@ import {
   PALETTES,
   type Accent,
   type Background,
+  type Mode,
   type Palette,
 } from "../lib/themes";
 import { cn } from "../utils/cn";
@@ -24,6 +27,8 @@ interface Props {
   background: Background;
   palette: Palette;
   customImage: string | null;
+  mode: Mode;
+  onMode: (m: Mode) => void;
   onAccent: (id: string) => void;
   onBackground: (id: string) => void;
   onPalette: (id: string) => void;
@@ -53,6 +58,8 @@ export default function ThemePanel({
   background,
   palette,
   customImage,
+  mode,
+  onMode,
   onAccent,
   onBackground,
   onPalette,
@@ -108,7 +115,7 @@ export default function ThemePanel({
         exit={{ x: 380, opacity: 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 36 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-[#0a0c12]"
+        className="relative flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-panel"
       >
         {/* header */}
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
@@ -136,7 +143,37 @@ export default function ThemePanel({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
+          {/* mode */}
+          <SectionLabel icon={<Sun size={11} />}>Appearance mode</SectionLabel>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                { id: "dark", name: "Dark", icon: <Moon size={14} /> },
+                { id: "light", name: "Light", icon: <Sun size={14} /> },
+              ] as const
+            ).map((m) => {
+              const active = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => onMode(m.id)}
+                  className={cn(
+                    "flex cursor-pointer items-center justify-center gap-2 rounded-xl border py-3 font-mono text-[10px] font-bold tracking-[0.18em] transition-all duration-150 hover:-translate-y-px active:scale-[0.98]",
+                    active
+                      ? "border-volt/60 bg-volt/12 text-volt"
+                      : "border-white/10 bg-white/[0.03] text-white/50 hover:border-white/25 hover:text-white/80",
+                  )}
+                >
+                  {m.icon}
+                  {m.name.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
           {/* accent */}
+          <div className="mt-7" />
           <SectionLabel icon={<Sparkles size={11} />}>Accent theme</SectionLabel>
           <div className="grid grid-cols-4 gap-2">
             {ACCENTS.map((a) => {

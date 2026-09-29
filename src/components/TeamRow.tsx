@@ -62,7 +62,7 @@ export function StepChip({
           : {
               borderColor: "rgba(255,255,255,0.1)",
               background: "rgba(255,255,255,0.05)",
-              color: "rgba(244,245,247,0.85)",
+              color: "rgba(var(--fg-rgb), 0.85)",
             }
       }
     >
@@ -186,8 +186,8 @@ export default function TeamRow({
             color: isLeader
               ? team.color
               : rank === null
-                ? "rgba(244,245,247,0.15)"
-                : "rgba(244,245,247,0.3)",
+                ? "rgba(var(--fg-rgb), 0.18)"
+                : "rgba(var(--fg-rgb), 0.35)",
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >

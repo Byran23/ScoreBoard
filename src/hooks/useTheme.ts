@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   accentById,
   backgroundById,
+  darkenHex,
   hexToRgbTriplet,
   paletteById,
   type Background,
+  type Mode,
 } from "../lib/themes";
 import { processImageFile } from "../lib/background";
 
@@ -14,15 +16,20 @@ interface Stored {
   accent: string;
   background: string;
   palette: string;
+  mode: Mode;
   /** data URL of a user-uploaded image, compressed */
   customImage: string | null;
 }
 
 function load(): Stored {
+  const prefersLight =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-color-scheme: light)").matches;
   const fallback: Stored = {
     accent: "volt",
     background: "arena",
     palette: "neon",
+    mode: prefersLight ? "light" : "dark",
     customImage: null,
   };
   try {
@@ -34,6 +41,7 @@ function load(): Stored {
       background:
         typeof p.background === "string" ? p.background : fallback.background,
       palette: typeof p.palette === "string" ? p.palette : fallback.palette,
+      mode: p.mode === "light" || p.mode === "dark" ? p.mode : fallback.mode,
       customImage:
         typeof p.customImage === "string" ? p.customImage : fallback.customImage,
     };
@@ -63,13 +71,21 @@ export function useTheme() {
       ? customBackground
       : backgroundById(state.background);
 
-  /* drive every `volt` utility + glow via CSS variables */
+  const mode = state.mode;
+  const isLight = mode === "light";
+
+  /* light surfaces need a deeper accent to stay legible */
+  const accentColor = isLight ? darkenHex(accent.color, 0.45) : accent.color;
+
+  /* toggle the light scope + drive every `volt` utility and glow */
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--color-volt", accent.color);
-    root.style.setProperty("--accent-rgb", hexToRgbTriplet(accent.color));
-    document.body.style.setProperty("--accent", accent.color);
-  }, [accent.color]);
+    root.classList.toggle("light", isLight);
+    root.style.colorScheme = isLight ? "light" : "dark";
+    root.style.setProperty("--color-volt", accentColor);
+    root.style.setProperty("--accent-rgb", hexToRgbTriplet(accentColor));
+    document.body.style.setProperty("--accent", accentColor);
+  }, [accentColor, isLight]);
 
   useEffect(() => {
     try {
@@ -91,6 +107,15 @@ export function useTheme() {
     (id: string) => setState((s) => ({ ...s, palette: id })),
     [],
   );
+  const setMode = useCallback(
+    (m: Mode) => setState((s) => ({ ...s, mode: m })),
+    [],
+  );
+  const toggleMode = useCallback(
+    () =>
+      setState((s) => ({ ...s, mode: s.mode === "light" ? "dark" : "light" })),
+    [],
+  );
 
   /** compress + store an uploaded photo, then activate it */
   const uploadBackground = useCallback(async (file: File) => {
@@ -108,12 +133,17 @@ export function useTheme() {
 
   return {
     accent,
+    accentColor,
     background,
     palette,
+    mode,
+    isLight,
     customImage: state.customImage,
     setAccent,
     setBackground,
     setPalette,
+    setMode,
+    toggleMode,
     uploadBackground,
     removeCustomBackground,
   };
