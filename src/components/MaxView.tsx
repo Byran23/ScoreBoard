@@ -99,21 +99,27 @@ function PresentRow({
           isLeader && "py-5 md:py-6",
         )}
       >
-        <div
-          className={cn(
-            "shrink-0 font-display font-bold tabular-nums leading-none",
-            isLeader ? "text-3xl md:text-5xl" : "text-2xl md:text-4xl",
+        {/* rank — tie badge stands vertically beside the number */}
+        <div className="flex shrink-0 items-center gap-1">
+          {tied && rank !== null && (
+            <TieBadge color={team.color} rank={rank} vertical large />
           )}
-          style={{
-            color: isLeader
-              ? team.color
-              : rank === null
-                ? "rgba(var(--fg-rgb), 0.18)"
-                : "rgba(var(--fg-rgb), 0.35)",
-            textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
-          }}
-        >
-          {rank === null ? "—" : String(rank).padStart(2, "0")}
+          <div
+            className={cn(
+              "font-display font-bold tabular-nums leading-none",
+              isLeader ? "text-3xl md:text-5xl" : "text-2xl md:text-4xl",
+            )}
+            style={{
+              color: isLeader
+                ? team.color
+                : rank === null
+                  ? "rgba(var(--fg-rgb), 0.18)"
+                  : "rgba(var(--fg-rgb), 0.35)",
+              textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
+            }}
+          >
+            {rank === null ? "—" : String(rank).padStart(2, "0")}
+          </div>
         </div>
 
         <div
@@ -142,9 +148,6 @@ function PresentRow({
               </span>
             )}
 
-            {tied && rank !== null && (
-              <TieBadge color={team.color} rank={rank} large />
-            )}
           </div>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
             {gap === 0 && team.score > 0 && tied

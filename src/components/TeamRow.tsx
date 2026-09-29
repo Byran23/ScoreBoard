@@ -180,22 +180,27 @@ export default function TeamRow({
           isLeader && "py-5 md:py-6",
         )}
       >
-        {/* rank */}
-        <div
-          className={cn(
-            "shrink-0 font-display font-bold tabular-nums leading-none",
-            isLeader ? "text-[1.75rem] md:text-5xl" : "text-2xl md:text-4xl",
+        {/* rank — tie badge stands vertically beside the number */}
+        <div className="flex shrink-0 items-center gap-1">
+          {tied && rank !== null && (
+            <TieBadge color={team.color} rank={rank} vertical />
           )}
-          style={{
-            color: isLeader
-              ? team.color
-              : rank === null
-                ? "rgba(var(--fg-rgb), 0.18)"
-                : "rgba(var(--fg-rgb), 0.35)",
-            textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
-          }}
-        >
-          {rank === null ? "—" : String(rank).padStart(2, "0")}
+          <div
+            className={cn(
+              "font-display font-bold tabular-nums leading-none",
+              isLeader ? "text-[1.75rem] md:text-5xl" : "text-2xl md:text-4xl",
+            )}
+            style={{
+              color: isLeader
+                ? team.color
+                : rank === null
+                  ? "rgba(var(--fg-rgb), 0.18)"
+                  : "rgba(var(--fg-rgb), 0.35)",
+              textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
+            }}
+          >
+            {rank === null ? "—" : String(rank).padStart(2, "0")}
+          </div>
         </div>
 
         {/* avatar */}
@@ -252,10 +257,6 @@ export default function TeamRow({
               >
                 <Crown size={11} strokeWidth={2.6} className="text-black" />
               </span>
-            )}
-
-            {tied && rank !== null && (
-              <TieBadge color={team.color} rank={rank} />
             )}
 
             <AnimatePresence mode="wait">
