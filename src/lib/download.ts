@@ -206,9 +206,7 @@ export async function renderStandingsPng(
     ctx.font = display(700, 28);
     ctx.fillStyle = isLeader ? t.color : rank === null ? dim(0.15) : dim(0.3);
     ctx.fillText(
-      rank === null
-        ? "—"
-        : `${tied ? "T" : ""}${String(rank).padStart(2, "0")}`,
+      rank === null ? "—" : String(rank).padStart(2, "0"),
       PADX + 30,
       rowY + ROW_H / 2 - 1,
     );
@@ -229,7 +227,26 @@ export async function renderStandingsPng(
     ctx.fillStyle = dim(0.95);
     ctx.textAlign = "left";
     const name = t.name.toUpperCase();
-    ctx.fillText(name, chipX + chipS + 22, rowY + ROW_H / 2 + 2);
+    const nameX = chipX + chipS + 22;
+    ctx.fillText(name, nameX, rowY + ROW_H / 2 + 2);
+
+    /* tied badge */
+    if (tied) {
+      const nameW = ctx.measureText(name).width;
+      const bx = nameX + nameW + 16;
+      ctx.font = mono(800, 13);
+      const label = "TIED";
+      const bw = ctx.measureText(label).width + 22;
+      ctx.fillStyle = `${t.color}2e`;
+      rr(ctx, bx, rowY + ROW_H / 2 - 12, bw, 24, 12);
+      ctx.fill();
+      ctx.strokeStyle = `${t.color}80`;
+      ctx.lineWidth = 1.5;
+      rr(ctx, bx, rowY + ROW_H / 2 - 12, bw, 24, 12);
+      ctx.stroke();
+      ctx.fillStyle = t.color;
+      ctx.fillText(label, bx + 11, rowY + ROW_H / 2 + 1);
+    }
 
     /* score */
     ctx.font = mono(700, 32);

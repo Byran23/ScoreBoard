@@ -13,6 +13,7 @@ import { initialsOf } from "../types";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
 import ScoreInput from "./ScoreInput";
+import TieBadge from "./TieBadge";
 
 const SPRING: Transition = {
   type: "spring",
@@ -194,21 +195,7 @@ export default function TeamRow({
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {rank === null ? (
-            "—"
-          ) : (
-            <>
-              {tied && (
-                <span
-                  className="mr-0.5 align-top text-[0.45em] font-bold opacity-70"
-                  title="Tied rank"
-                >
-                  T
-                </span>
-              )}
-              {String(rank).padStart(2, "0")}
-            </>
-          )}
+          {rank === null ? "—" : String(rank).padStart(2, "0")}
         </div>
 
         {/* avatar */}
@@ -265,6 +252,10 @@ export default function TeamRow({
               >
                 <Crown size={11} strokeWidth={2.6} className="text-black" />
               </span>
+            )}
+
+            {tied && rank !== null && (
+              <TieBadge color={team.color} rank={rank} />
             )}
 
             <AnimatePresence mode="wait">

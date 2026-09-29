@@ -18,6 +18,7 @@ import { cn } from "../utils/cn";
 import Backdrop from "./Backdrop";
 import AnimatedScore from "./AnimatedScore";
 import ScoreInput from "./ScoreInput";
+import TieBadge from "./TieBadge";
 import { MinusChip, StepChip } from "./TeamRow";
 
 const SPRING: Transition = {
@@ -112,21 +113,7 @@ function PresentRow({
             textShadow: isLeader ? `0 0 30px ${team.color}66` : undefined,
           }}
         >
-          {rank === null ? (
-            "—"
-          ) : (
-            <>
-              {tied && (
-                <span
-                  className="mr-0.5 align-top text-[0.45em] font-bold opacity-70"
-                  title="Tied rank"
-                >
-                  T
-                </span>
-              )}
-              {String(rank).padStart(2, "0")}
-            </>
-          )}
+          {rank === null ? "—" : String(rank).padStart(2, "0")}
         </div>
 
         <div
@@ -153,6 +140,10 @@ function PresentRow({
               >
                 <Crown size={11} strokeWidth={2.6} className="text-black" />
               </span>
+            )}
+
+            {tied && rank !== null && (
+              <TieBadge color={team.color} rank={rank} large />
             )}
           </div>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">

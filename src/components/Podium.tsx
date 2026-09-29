@@ -17,6 +17,7 @@ import type { Background } from "../lib/themes";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
 import Backdrop from "./Backdrop";
+import TieBadge from "./TieBadge";
 
 const MEDAL_COLORS = ["#FFD34D", "#D7DBE4", "#E8A06A"] as const;
 const PLACE_LABELS = ["1ST", "2ND", "3RD"] as const;
@@ -124,6 +125,8 @@ function PodiumColumn({
       >
         {team.name}
       </p>
+
+      {tied && <TieBadge color={medal} rank={place} className="mt-1.5" />}
       <p
         className="mt-1 flex items-baseline gap-1 font-mono font-bold tabular-nums"
         style={{
@@ -421,10 +424,7 @@ export default function Podium({
                     transition={{ delay: 0.7 + i * 0.04 }}
                     className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-2.5"
                   >
-                    <span className="w-10 shrink-0 font-mono text-sm font-bold tabular-nums text-white/30">
-                      {tied && (
-                        <span className="mr-0.5 text-[9px] opacity-70">T</span>
-                      )}
+                    <span className="w-8 shrink-0 font-mono text-sm font-bold tabular-nums text-white/30">
                       {String(rank).padStart(2, "0")}
                     </span>
                     <span
@@ -434,6 +434,7 @@ export default function Podium({
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold uppercase tracking-wide text-white/75">
                       {t.name}
                     </span>
+                    {tied && <TieBadge color={t.color} rank={rank} />}
                     <span className="shrink-0 font-mono text-sm font-bold tabular-nums">
                       {t.score}
                       <span className="ml-1.5 text-[9px] uppercase tracking-[0.2em] text-white/30">
