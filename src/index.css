@@ -31,6 +31,10 @@
   }
 }
 
+:root {
+  --accent-rgb: 200, 245, 66;
+}
+
 body {
   background-color: #06070b;
   color: #f4f5f7;
@@ -41,7 +45,7 @@ body {
 }
 
 ::selection {
-  background: #c8f542;
+  background: var(--color-volt);
   color: #06070b;
 }
 

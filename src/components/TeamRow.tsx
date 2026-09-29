@@ -3,6 +3,7 @@ import { AnimatePresence, motion, type Transition } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Crown,
   Minus,
   Pencil,
   Trash2,
@@ -236,6 +237,17 @@ export default function TeamRow({
               >
                 {team.name}
               </button>
+            )}
+
+            {isLeader && (
+              <span
+                className="inline-flex size-5 shrink-0 animate-glow-pulse items-center justify-center rounded-full"
+                style={{ background: team.color }}
+                title="Leader"
+                aria-label="Leader"
+              >
+                <Crown size={11} strokeWidth={2.6} className="text-black" />
+              </span>
             )}
 
             <AnimatePresence mode="wait">

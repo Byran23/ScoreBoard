@@ -80,8 +80,10 @@ interface UndoEntry {
   prevScore: number;
 }
 
-export function useScoreboard() {
+export function useScoreboard(palette: string[] = PALETTE) {
   const [teams, setTeams] = useState<Team[]>(loadTeams);
+  const paletteRef = useRef(palette);
+  paletteRef.current = palette;
   const [soundOn, setSoundOn] = useState<boolean>(() => {
     try {
       return localStorage.getItem(SOUND_KEY) !== "0";
@@ -278,7 +280,7 @@ export function useScoreboard() {
     const team: Team = {
       id: makeId(),
       name: clean,
-      color: colorForIndex(prev.length),
+      color: colorForIndex(prev.length, paletteRef.current),
       score: 0,
       createdAt: Date.now(),
     };
@@ -316,6 +318,22 @@ export function useScoreboard() {
   const setTitle = useCallback((value: string) => {
     const clean = value.trim().replace(/\s+/g, " ").slice(0, 24);
     setTitleState(clean || DEFAULT_TITLE);
+  }, []);
+
+  /** recolor every existing team using the active palette, in board order */
+  const recolorTeams = useCallback(() => {
+    const colors = paletteRef.current;
+    const order = sortTeams(teamsRef.current);
+    const colorById = new Map(
+      order.map((t, i) => [t.id, colorForIndex(i, colors)]),
+    );
+    setTeams(
+      teamsRef.current.map((t) => ({
+        ...t,
+        color: colorById.get(t.id) ?? t.color,
+      })),
+    );
+    sfx.click();
   }, []);
 
   const setKicker = useCallback((value: string) => {
@@ -378,6 +396,7 @@ export function useScoreboard() {
       undo,
       setTitle,
       setKicker,
+      recolorTeams,
       toggleSound,
       toggleSim,
     },

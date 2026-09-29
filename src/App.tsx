@@ -12,6 +12,7 @@ import {
   Play,
   RotateCcw,
   Search,
+  Sparkles,
   Trophy,
   Undo2,
   Users,
@@ -22,6 +23,9 @@ import {
 } from "lucide-react";
 import AddTeam from "./components/AddTeam";
 import AnimatedScore from "./components/AnimatedScore";
+import Backdrop from "./components/Backdrop";
+import ThemePanel from "./components/ThemePanel";
+import { useTheme } from "./hooks/useTheme";
 import ExportSheet, { type ExportResult } from "./components/ExportSheet";
 import MaxView from "./components/MaxView";
 import Podium from "./components/Podium";
@@ -120,7 +124,9 @@ function titleFont(len: number): string {
 }
 
 export default function App() {
-  const sb = useScoreboard();
+  const theme = useTheme();
+  const sb = useScoreboard(theme.palette.colors);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [ended, setEnded] = useState(false);
@@ -241,22 +247,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen">
       {/* --------------------------------- backdrop --------------------------------- */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <img
-          src="/images/arena.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-45"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/45 to-ink" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(85% 45% at 50% -6%, rgba(200,245,66,0.13), transparent 65%)",
-          }}
-        />
-        <div className="noise absolute inset-0 opacity-[0.05]" />
-      </div>
+      <Backdrop background={theme.background} />
 
       <LeadBanner lead={leadInfo} />
 
@@ -321,6 +312,13 @@ export default function App() {
               wide={<span className="hidden lg:inline">SFX</span>}
             >
               {sb.soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            </HeaderButton>
+            <HeaderButton
+              label="THEME"
+              active={themeOpen}
+              onClick={() => setThemeOpen(true)}
+            >
+              <Sparkles size={13} />
             </HeaderButton>
           </div>
         </div>
@@ -596,6 +594,7 @@ export default function App() {
           <MaxView
             teams={sb.teams}
             title={sb.title}
+            background={theme.background}
             totalPoints={sb.totalPoints}
             topScore={sb.topScore}
             deltas={sb.deltas}
@@ -614,11 +613,31 @@ export default function App() {
           <Podium
             teams={sb.teams}
             title={sb.title}
+            background={theme.background}
             totalPoints={sb.totalPoints}
             onClose={() => setEnded(false)}
             onPng={() => void handlePng()}
             onCsv={handleCsv}
             onRematch={handleRematch}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ------------------------------ theme panel ------------------------------- */}
+      <AnimatePresence>
+        {themeOpen && (
+          <ThemePanel
+            accent={theme.accent}
+            background={theme.background}
+            palette={theme.palette}
+            customImage={theme.customImage}
+            onAccent={theme.setAccent}
+            onBackground={theme.setBackground}
+            onPalette={theme.setPalette}
+            onUpload={theme.uploadBackground}
+            onRemoveCustom={theme.removeCustomBackground}
+            onApplyPaletteToTeams={sb.actions.recolorTeams}
+            onClose={() => setThemeOpen(false)}
           />
         )}
       </AnimatePresence>

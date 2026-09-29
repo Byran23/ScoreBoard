@@ -64,7 +64,8 @@ function hslToHex(h: number, s: number, l: number): string {
 }
 
 /** Curated colors for the first teams, golden-angle hues beyond that. Always hex. */
-export function colorForIndex(index: number): string {
-  if (index < PALETTE.length) return PALETTE[index];
+export function colorForIndex(index: number, palette: string[] = PALETTE): string {
+  const list = palette.length ? palette : PALETTE;
+  if (index < list.length) return list[index];
   return hslToHex(Math.round((index * 137.508) % 360), 85, 64);
 }

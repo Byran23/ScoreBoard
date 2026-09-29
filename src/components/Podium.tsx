@@ -12,8 +12,10 @@ import {
   Zap,
 } from "lucide-react";
 import type { Team } from "../types";
+import type { Background } from "../lib/themes";
 import { cn } from "../utils/cn";
 import AnimatedScore from "./AnimatedScore";
+import Backdrop from "./Backdrop";
 
 const MEDAL_COLORS = ["#FFD34D", "#D7DBE4", "#E8A06A"] as const;
 const PLACE_LABELS = ["1ST", "2ND", "3RD"] as const;
@@ -165,6 +167,7 @@ function PodiumColumn({
 interface Props {
   teams: Team[];
   title: string;
+  background: Background;
   totalPoints: number;
   onClose: () => void;
   onPng: () => void;
@@ -175,6 +178,7 @@ interface Props {
 export default function Podium({
   teams,
   title,
+  background,
   totalPoints,
   onClose,
   onPng,
@@ -272,22 +276,7 @@ export default function Podium({
       className="fixed inset-0 z-[90] overflow-y-auto bg-ink"
     >
       {/* backdrop */}
-      <div className="pointer-events-none fixed inset-0">
-        <img
-          src="/images/arena.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/55 to-ink" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(85% 50% at 50% 0%, rgba(255,211,77,0.12), transparent 65%)",
-          }}
-        />
-        <div className="noise absolute inset-0 opacity-[0.05]" />
-      </div>
+      <Backdrop background={background} glow="rgba(255,211,77,0.12)" />
 
       {/* winner spotlight */}
       {winner && (

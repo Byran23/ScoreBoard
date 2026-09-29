@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
 import {
+  Crown,
   FileSpreadsheet,
   Flag,
   ImageDown,
@@ -12,7 +13,9 @@ import {
 } from "lucide-react";
 import type { ScoreDelta, Team } from "../types";
 import { initialsOf } from "../types";
+import type { Background } from "../lib/themes";
 import { cn } from "../utils/cn";
+import Backdrop from "./Backdrop";
 import AnimatedScore from "./AnimatedScore";
 import ScoreInput from "./ScoreInput";
 import { MinusChip, StepChip } from "./TeamRow";
@@ -125,6 +128,16 @@ function PresentRow({
             <p className="truncate text-base font-semibold uppercase tracking-wide text-white/90 md:text-xl">
               {team.name}
             </p>
+            {isLeader && (
+              <span
+                className="inline-flex size-5 shrink-0 animate-glow-pulse items-center justify-center rounded-full"
+                style={{ background: team.color }}
+                title="Leader"
+                aria-label="Leader"
+              >
+                <Crown size={11} strokeWidth={2.6} className="text-black" />
+              </span>
+            )}
           </div>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
             {isLeader
@@ -183,6 +196,7 @@ function PresentRow({
 interface Props {
   teams: Team[];
   title: string;
+  background: Background;
   totalPoints: number;
   topScore: number;
   deltas: Record<string, ScoreDelta>;
@@ -225,6 +239,7 @@ function MaxAction({
 export default function MaxView({
   teams,
   title,
+  background,
   totalPoints,
   topScore,
   deltas,
@@ -268,22 +283,7 @@ export default function MaxView({
       className="fixed inset-0 z-[80] bg-ink"
     >
       {/* backdrop */}
-      <div className="pointer-events-none absolute inset-0">
-        <img
-          src="/images/arena.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/50 to-ink" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(85% 45% at 50% -6%, rgba(200,245,66,0.13), transparent 65%)",
-          }}
-        />
-        <div className="noise absolute inset-0 opacity-[0.05]" />
-      </div>
+      <Backdrop background={background} fixed={false} />
 
       <div className="relative flex h-full flex-col">
         {/* top bar */}
